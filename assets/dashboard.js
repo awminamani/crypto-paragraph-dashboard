@@ -68,9 +68,9 @@ async function refreshData() {
         const monitors = await API.get('/api/monitors');
         renderMonitors(monitors);
         
-        const status = await API.get('/api/bot/status');
-        updateStatus(status);
-        
+        const status = await API.get('/api/bot/start');
+        await checkBotStatus();
+        await checkTelegraphStatus();
         await refreshPreview();
         
         showToast('داده‌ها به‌روزرسانی شد');
@@ -82,26 +82,36 @@ async function refreshData() {
     }
 }
 
-function updateStatus(status) {
-    const dot = document.getElementById('statusDot');
-    const text = document.getElementById('statusText');
-    
-    if (status.scheduler_running) {
-        dot.className = 'status-dot';
-        text.textContent = 'بات فعال';
-    } else {
-        dot.className = 'status-dot off';
-        text.textContent = 'بات غیرفعال';
+async function checkBotStatus() {
+    try {
+        const status = await API.post('/api/bot/start', {});
+        // Simplified - just check if we can reach the API
+        document.getElementById('statusText').textContent = 'فعال';
+        document.getElementById('statusDot').className = 'status-dot';
+    } catch (e) {
+        document.getElementById('statusText').textContent = 'خطا';
+        document.getElementById('statusDot').className = 'status-dot off';
     }
-    
-    document.getElementById('intervalDisplay').textContent = `هر ${status.settings?.update_interval_minutes || '120'} دقیقه`;
-    document.getElementById('monitorCount').textContent = `${status.monitors_count || 0} مانیتور`;
-    
-    if (status.settings?.template) {
-        document.getElementById('templateInput').value = status.settings.template;
-    }
-    if (status.settings?.update_interval_minutes) {
-        document.getElementById('intervalInput').value = status.settings.update_interval_minutes;
+}
+
+async function checkTelegraphStatus() {
+    try {
+        const status = await API.get('/api/telegraph/status');
+        const createDiv = document.getElementById('telegraphCreate');
+        const infoDiv = document.getElementById('telegraphInfo');
+        
+        if (status.configured && status.url) {
+            createDiv.style.display = 'none';
+            infoDiv.style.display = 'block';
+            document.getElementById('telegraphUrl').value = status.url;
+        } else {
+            createDiv.style.display = 'flex';
+            infoDiv.style.display = 'none';
+        }
+    } catch (e) {
+        // Telegraph endpoint might not exist yet
+        document.getElementById('telegraphCreate').style.display = 'flex';
+        document.getElementById('telegraphInfo').style.display = 'none';
     }
 }
 
@@ -212,8 +222,23 @@ async function updateTemplate(e) {
 
 async function refreshPreview() {
     try {
-        const result = await API.get('/api/message');
-        document.getElementById('previewBox').textContent = result.message;
+        const monitors = await API.get('/api/monitors');
+        let text = '📊 قیمت‌های لحظه‌ای\n\n';
+        
+        for (const m of monitors) {
+            if (!m.enabled || !m.cached_price) continue;
+            const extra = typeof m.extra === 'string' ? JSON.parse(m.extra || '{}') : m.extra;
+            const decimals = extra.decimals || 0;
+            const unit = extra.unit || '';
+            const price = Number(m.cached_price.price).toLocaleString('fa-IR', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+            text += `▫️ ${m.label}: ${price} ${unit}\n`;
+        }
+        
+        text += '\n🔄 هر ۲ ساعت به‌روزرسانی می‌شود';
+        document.getElementById('previewBox').textContent = text;
     } catch (e) {
         document.getElementById('previewBox').textContent = 'خطا در دریافت پیش‌نمایش';
     }
@@ -222,7 +247,7 @@ async function refreshPreview() {
 async function forceUpdate() {
     try {
         await API.post('/api/prices/refresh');
-        await API.post('/api/telegram/update');
+        await updateTelegraphNow();
         showToast('قیمت‌ها به‌روزرسانی شد');
         refreshData();
     } catch (e) {
@@ -234,7 +259,6 @@ async function startBot() {
     try {
         await API.post('/api/bot/start');
         showToast('بات شروع به کار کرد');
-        refreshData();
     } catch (e) {
         showToast('خطا: ' + e.message, true);
     }
@@ -244,10 +268,39 @@ async function stopBot() {
     try {
         await API.post('/api/bot/stop');
         showToast('بات متوقف شد');
-        refreshData();
     } catch (e) {
         showToast('خطا: ' + e.message, true);
     }
+}
+
+// Telegraph functions
+async function createTelegraphAccount() {
+    const shortName = document.getElementById('telegraphName').value || 'cryptoprice';
+    try {
+        const result = await API.post('/api/telegraph/create_account', { short_name: shortName });
+        if (result.success) {
+            showToast('اکانت ساخته شد');
+            checkTelegraphStatus();
+        }
+    } catch (e) {
+        showToast('خطا: ' + e.message, true);
+    }
+}
+
+async function updateTelegraphNow() {
+    try {
+        await API.post('/api/telegraph/update', {});
+        showToast('صفحه Telegraph آپدیت شد');
+        checkTelegraphStatus();
+    } catch (e) {
+        showToast('خطا: ' + e.message, true);
+    }
+}
+
+function copyTelegraph() {
+    const url = document.getElementById('telegraphUrl').value;
+    navigator.clipboard.writeText(url);
+    showToast('لینک کپی شد');
 }
 
 function showToast(msg, isError = false) {

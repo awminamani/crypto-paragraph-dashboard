@@ -27,7 +27,7 @@
         </header>
 
         <div class="card">
-            <h2 class="card-title">⚙️ کنترل بات</h2>
+            <h2 class="card-title">⚙️ کنترل</h2>
             <div class="controls">
                 <button class="btn btn-primary" onclick="forceUpdate()">🔄 به‌روزرسانی فوری</button>
                 <button class="btn btn-secondary" onclick="startBot()">▶️ شروع</button>
@@ -41,14 +41,31 @@
             <div class="form-row">
                 <div class="form-group" style="flex:1">
                     <label>آدرس API بک‌اند</label>
-                    <input type="url" id="apiUrl" placeholder="https://your-api.alwaysdata.net" 
-                           style="width:100%; padding:10px; border-radius:6px; border:1px solid #0f3460; background:rgba(26,26,46,0.5); color:#e0e0e0;">
+                    <input type="url" id="apiUrl" placeholder="https://your-api.alwaysdata.net">
                 </div>
                 <button class="btn btn-primary" onclick="saveApiUrl()" style="align-self:end">ذخیره</button>
             </div>
-            <p style="margin-top:8px; font-size:0.85em; color:#888;">
-                ⚠️ آدرس بک‌اند alwaysdata خود را وارد کنید (بدون اسلش آخر)
-            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📝 صفحه Telegraph</h2>
+            <div id="telegraphSection">
+                <div class="form-row" id="telegraphCreate" style="display:none">
+                    <div class="form-group" style="flex:1">
+                        <label>نام کوتاه اکانت</label>
+                        <input type="text" id="telegraphName" placeholder="cryptoprice" value="cryptoprice">
+                    </div>
+                    <button class="btn btn-primary" onclick="createTelegraphAccount()" style="align-self:end">ساخت اکانت</button>
+                </div>
+                <div id="telegraphInfo" style="display:none">
+                    <p style="margin-bottom:10px;">✅ صفحه Telegraph آماده‌ست:</p>
+                    <div class="form-row">
+                        <input type="text" id="telegraphUrl" readonly style="flex:1; direction:ltr; text-align:left;">
+                        <button class="btn btn-primary" onclick="copyTelegraph()">کپی لینک</button>
+                        <button class="btn btn-secondary" onclick="updateTelegraphNow()">آپدیت صفحه</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -123,7 +140,7 @@
         </div>
 
         <div class="card">
-            <h2 class="card-title">👁️ پیش‌نمایش پیام تلگرام</h2>
+            <h2 class="card-title">👁️ پیش‌نمایش</h2>
             <div class="preview-box" id="previewBox" style="background:#1a1a2e; padding:15px; border-radius:8px; font-family:monospace; white-space:pre-wrap; line-height:1.6; min-height:100px;">در حال بارگذاری...</div>
         </div>
     </div>
