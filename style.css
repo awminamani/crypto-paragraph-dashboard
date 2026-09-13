@@ -1,0 +1,110 @@
+/* Dashboard Dark Theme */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 100vh;
+    color: #e0e0e0;
+    padding: 20px;
+}
+.container { max-width: 900px; margin: 0 auto; }
+header {
+    text-align: center;
+    padding: 25px 0;
+    border-bottom: 2px solid #0f3460;
+    margin-bottom: 30px;
+}
+h1 { font-size: 1.8em; color: #e94560; margin-bottom: 10px; }
+.status-bar {
+    display: flex; justify-content: center; gap: 15px;
+    margin-top: 15px; flex-wrap: wrap;
+}
+.status-item {
+    background: #0f3460; padding: 6px 14px;
+    border-radius: 15px; font-size: 0.85em;
+    display: flex; align-items: center; gap: 6px;
+}
+.status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ffc107; animation: pulse 2s infinite;
+}
+.status-dot.on { background: #28a745; }
+.status-dot.off { background: #dc3545; animation: none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.card {
+    background: rgba(15,52,96,0.5); border-radius: 12px;
+    padding: 20px; margin-bottom: 20px; border: 1px solid #0f3460;
+}
+.card-title {
+    font-size: 1.2em; color: #e94560;
+    margin-bottom: 15px; border-bottom: 1px solid #0f3460;
+    padding-bottom: 8px;
+}
+.controls { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+    padding: 8px 16px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+}
+.btn-primary { background: #e94560; color: white; }
+.btn-secondary { background: #0f3460; color: white; }
+.btn-success { background: #28a745; color: white; }
+.btn-danger { background: #dc3545; color: white; }
+.btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-sm { padding: 5px 10px; font-size: 0.75em; }
+.form-row { display: flex; gap: 10px; align-items: center; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+label { font-size: 0.8em; color: #aaa; }
+input, select, textarea {
+    padding: 10px; border-radius: 6px; border: 1px solid #0f3460;
+    background: rgba(26,26,46,0.5); color: #e0e0e0;
+    font-size: 0.9em; font-family: inherit;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none; border-color: #e94560;
+}
+.add-monitor-form {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.full-width { grid-column: 1 / -1; }
+.monitor-grid { display: grid; gap: 10px; }
+.monitor-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(26,26,46,0.5); padding: 12px 14px;
+    border-radius: 8px; border-right: 3px solid #0f3460;
+    transition: all 0.2s;
+}
+.monitor-item:hover { border-right-color: #e94560; }
+.monitor-item.disabled { opacity: 0.4; }
+.monitor-info { display: flex; flex-direction: column; gap: 2px; }
+.monitor-label { font-weight: bold; font-size: 1em; }
+.monitor-meta { font-size: 0.75em; color: #888; }
+.monitor-price {
+    font-size: 1em; font-family: monospace; text-align: left;
+}
+.monitor-actions { display: flex; gap: 6px; margin-right: 12px; }
+.empty-state { text-align: center; padding: 30px; color: #888; }
+.preview-box {
+    background: #1a1a2e; padding: 15px; border-radius: 8px;
+    font-family: monospace; white-space: pre-wrap; line-height: 1.6;
+    min-height: 80px; max-height: 250px; overflow-y: auto;
+}
+.toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #28a745; color: white; padding: 10px 20px;
+    border-radius: 8px; z-index: 1000; animation: fadeOut 3s forwards;
+}
+.toast.error { background: #dc3545; }
+@keyframes fadeOut {
+    0%{opacity:0;transform:translateX(-50%) translateY(-15px)}
+    10%{opacity:1;transform:translateX(-50%) translateY(0)}
+    75%{opacity:1} 100%{opacity:0}
+}
+.link-box {
+    background: #1a1a2e; padding: 12px; border-radius: 6px;
+    word-break: break-all; direction: ltr; text-align: left;
+    font-family: monospace; font-size: 0.85em; color: #e94560;
+}
+@media (max-width: 768px) {
+    .add-monitor-form { grid-template-columns: 1fr; }
+    .monitor-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+}

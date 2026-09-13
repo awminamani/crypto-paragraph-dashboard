@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 داشبورد قیمت‌های لحظه‌ای</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -74,6 +74,6 @@
         <div class="card"><h2 class="card-title">📝 قالب پیام</h2><form onsubmit="updateTemplate(event)"><div class="form-group" style="margin-bottom:10px"><label>قالب</label><textarea id="templateInput" style="width:100%; min-height:50px; font-family:monospace; padding:8px; border-radius:6px; border:1px solid #0f3460; background:rgba(26,26,46,0.5); color:#e0e0e0;">▫️ {label}: {price} ({change})</textarea></div><div class="form-row" style="display:flex; gap:10px; align-items:end"><div class="form-group" style="flex:1"><label>فاصله (دقیقه)</label><input type="number" id="intervalInput" value="120" min="5" max="1440"></div><button type="submit" class="btn btn-primary">ذخیره</button></div></form></div>
         <div class="card"><h2 class="card-title">👁️ پیش‌نمایش</h2><div class="preview-box" id="previewBox">در حال بارگذاری...</div></div>
     </div>
-    <script src="assets/dashboard.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
