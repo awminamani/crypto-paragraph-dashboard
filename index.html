@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 داشبورد قیمت‌های لحظه‌ای</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 داشبورد قیمت‌های لحظه‌ای</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">در حال اتصال...</span>
+                </div>
+                <div class="status-item">
+                    <span>⏱</span>
+                    <span id="intervalDisplay">—</span>
+                </div>
+                <div class="status-item">
+                    <span>📡</span>
+                    <span id="monitorCount">—</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="card">
+            <h2 class="card-title">⚙️ کنترل بات</h2>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="forceUpdate()">🔄 به‌روزرسانی فوری</button>
+                <button class="btn btn-secondary" onclick="startBot()">▶️ شروع</button>
+                <button class="btn btn-secondary" onclick="stopBot()">⏹ توقف</button>
+                <button class="btn btn-secondary" onclick="refreshData()">🔄 بارگذاری مجدد</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">🔗 تنظیمات API</h2>
+            <div class="form-row">
+                <div class="form-group" style="flex:1">
+                    <label>آدرس API بک‌اند</label>
+                    <input type="url" id="apiUrl" placeholder="https://your-api.alwaysdata.net" 
+                           style="width:100%; padding:10px; border-radius:6px; border:1px solid #0f3460; background:rgba(26,26,46,0.5); color:#e0e0e0;">
+                </div>
+                <button class="btn btn-primary" onclick="saveApiUrl()" style="align-self:end">ذخیره</button>
+            </div>
+            <p style="margin-top:8px; font-size:0.85em; color:#888;">
+                ⚠️ آدرس بک‌اند alwaysdata خود را وارد کنید (بدون اسلش آخر)
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">➕ افزودن مانیتور جدید</h2>
+            <form class="add-monitor-form" onsubmit="addMonitor(event)">
+                <div class="form-group">
+                    <label>نام داخلی (انگلیسی)</label>
+                    <input type="text" id="newName" placeholder="my_monitor" required>
+                </div>
+                <div class="form-group">
+                    <label>برچسب نمایشی (فارسی)</label>
+                    <input type="text" id="newLabel" placeholder="مثال: طلا" required>
+                </div>
+                <div class="form-group">
+                    <label>منبع</label>
+                    <select id="newSource">
+                        <option value="bitpin">بیت‌پین</option>
+                        <option value="frankfurter">فرانکفرتر</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>کد</label>
+                    <input type="text" id="newCode" placeholder="مثلاً: XAU یا BTC_IRT" required>
+                </div>
+                <div class="form-group">
+                    <label>تعداد اعشار</label>
+                    <input type="number" id="newDecimals" value="0" min="0" max="10">
+                </div>
+                <div class="form-group">
+                    <label>واحد</label>
+                    <input type="text" id="newUnit" placeholder="تومان، دلار، ...">
+                </div>
+                <div class="form-group">
+                    <label>ترتیب</label>
+                    <input type="number" id="newSortOrder" value="0">
+                </div>
+                <div class="form-group">
+                    <label>نمایش تغییر</label>
+                    <select id="newShowChange">
+                        <option value="true">بله</option>
+                        <option value="false">خیر</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn btn-primary" style="width:100%">افزودن</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📡 مانیتورها</h2>
+            <div class="monitor-grid" id="monitorsList">
+                <div class="empty-state">در حال بارگذاری...</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📝 قالب پیام</h2>
+            <form onsubmit="updateTemplate(e)">
+                <div class="form-group" style="margin-bottom:12px">
+                    <label>قالب (متغیرها: {label}, {price}, {change}, {change_emoji})</label>
+                    <textarea class="template-editor" id="templateInput" style="width:100%; min-height:60px; font-family:monospace; padding:10px; border-radius:6px; border:1px solid #0f3460; background:rgba(26,26,46,0.5); color:#e0e0e0;">▫️ {label}: {price} ({change})</textarea>
+                </div>
+                <div class="form-row" style="display:flex; gap:12px; align-items:end">
+                    <div class="form-group" style="flex:1">
+                        <label>فاصله به‌روزرسانی (دقیقه)</label>
+                        <input type="number" id="intervalInput" value="120" min="5" max="1440" style="width:100%">
+                    </div>
+                    <button type="submit" class="btn btn-primary">ذخیره</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">👁️ پیش‌نمایش پیام تلگرام</h2>
+            <div class="preview-box" id="previewBox" style="background:#1a1a2e; padding:15px; border-radius:8px; font-family:monospace; white-space:pre-wrap; line-height:1.6; min-height:100px;">در حال بارگذاری...</div>
+        </div>
+    </div>
+
+    <script src="assets/dashboard.js"></script>
+</body>
+</html>
