@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 داشبورد قیمت‌های لحظه‌ای</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 2px solid #0f3460;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 1.8em; color: #e94560; margin-bottom: 10px; }
+        .status-bar {
+            display: flex; justify-content: center; gap: 15px;
+            margin-top: 15px; flex-wrap: wrap;
+        }
+        .status-item {
+            background: #0f3460; padding: 6px 14px;
+            border-radius: 15px; font-size: 0.85em;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #ffc107; animation: pulse 2s infinite;
+        }
+        .status-dot.on { background: #28a745; }
+        .status-dot.off { background: #dc3545; animation: none; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .card {
+            background: rgba(15,52,96,0.5); border-radius: 12px;
+            padding: 20px; margin-bottom: 20px; border: 1px solid #0f3460;
+        }
+        .card-title {
+            font-size: 1.2em; color: #e94560;
+            margin-bottom: 15px; border-bottom: 1px solid #0f3460;
+            padding-bottom: 8px;
+        }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+        }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-secondary { background: #0f3460; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .btn-sm { padding: 5px 10px; font-size: 0.75em; }
+        .form-row { display: flex; gap: 10px; align-items: center; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-size: 0.8em; color: #aaa; }
+        input, select, textarea {
+            padding: 10px; border-radius: 6px; border: 1px solid #0f3460;
+            background: rgba(26,26,46,0.5); color: #e0e0e0;
+            font-size: 0.9em; font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: #e94560;
+        }
+        .add-monitor-form {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .full-width { grid-column: 1 / -1; }
+        .monitor-grid { display: grid; gap: 10px; }
+        .monitor-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(26,26,46,0.5); padding: 12px 14px;
+            border-radius: 8px; border-right: 3px solid #0f3460;
+            transition: all 0.2s;
+        }
+        .monitor-item:hover { border-right-color: #e94560; }
+        .monitor-item.disabled { opacity: 0.4; }
+        .monitor-info { display: flex; flex-direction: column; gap: 2px; }
+        .monitor-label { font-weight: bold; font-size: 1em; }
+        .monitor-meta { font-size: 0.75em; color: #888; }
+        .monitor-price {
+            font-size: 1em; font-family: monospace; text-align: left;
+        }
+        .monitor-actions { display: flex; gap: 6px; margin-right: 12px; }
+        .empty-state { text-align: center; padding: 30px; color: #888; }
+        .preview-box {
+            background: #1a1a2e; padding: 15px; border-radius: 8px;
+            font-family: monospace; white-space: pre-wrap; line-height: 1.6;
+            min-height: 80px; max-height: 250px; overflow-y: auto;
+        }
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #28a745; color: white; padding: 10px 20px;
+            border-radius: 8px; z-index: 1000; animation: fadeOut 3s forwards;
+        }
+        .toast.error { background: #dc3545; }
+        @keyframes fadeOut {
+            0%{opacity:0;transform:translateX(-50%) translateY(-15px)}
+            10%{opacity:1;transform:translateX(-50%) translateY(0)}
+            75%{opacity:1} 100%{opacity:0}
+        }
+        .link-box {
+            background: #1a1a2e; padding: 12px; border-radius: 6px;
+            word-break: break-all; direction: ltr; text-align: left;
+            font-family: monospace; font-size: 0.85em; color: #e94560;
+        }
+        @media (max-width: 768px) {
+            .add-monitor-form { grid-template-columns: 1fr; }
+            .monitor-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 داشبورد قیمت‌های لحظه‌ای</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">در حال اتصال...</span>
+                </div>
+                <div class="status-item"><span>⏱</span><span id="intervalDisplay">—</span></div>
+                <div class="status-item"><span>📡</span><span id="monitorCount">—</span></div>
+            </div>
+        </header>
+
+        <div class="card">
+            <h2 class="card-title">⚙️ کنترل</h2>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="forceUpdate()">🔄 به‌روزرسانی فوری</button>
+                <button class="btn btn-secondary" onclick="refreshData()">🔄 بارگذاری مجدد</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">🔗 تنظیمات API</h2>
+            <div class="form-row">
+                <div class="form-group" style="flex:1">
+                    <label>آدرس Cloudflare Worker</label>
+                    <input type="url" id="apiUrl" placeholder="https://crypto-paragraph.your-subdomain.workers.dev">
+                </div>
+                <button class="btn btn-primary" onclick="saveApiUrl()" style="align-self:end">ذخیره</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📝 صفحه Telegraph</h2>
+            <div id="telegraphSection">
+                <div id="telegraphCreate" style="display:none">
+                    <p style="margin-bottom:10px; color:#888;">اکانت Telegraph نسخه رایگان تلگرام - صفحه قیمت‌ها اینجا میزبانی می‌شود:</p>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1">
+                            <label>نام کوتاه</label>
+                            <input type="text" id="telegraphName" value="cryptoprice">
+                        </div>
+                        <button class="btn btn-success" onclick="createTelegraphAccount()" style="align-self:end">ساخت اکانت</button>
+                    </div>
+                </div>
+                <div id="telegraphInfo" style="display:none">
+                    <p style="margin-bottom:8px;">✅ صفحه فعال:</p>
+                    <div class="link-box" id="telegraphUrl"></div>
+                    <div class="controls" style="margin-top:10px">
+                        <button class="btn btn-primary" onclick="copyLink()">کپی لینک</button>
+                        <button class="btn btn-secondary" onclick="updateTelegraphNow()">آپدیت صفحه</button>
+                        <a id="openLink" target="_blank" class="btn btn-secondary" style="text-decoration:none;">باز کردن</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">➕ افزودن مانیتور</h2>
+            <form class="add-monitor-form" onsubmit="addMonitor(event)">
+                <div class="form-group">
+                    <label>نام انگلیسی</label>
+                    <input type="text" id="newName" placeholder="my_monitor" required>
+                </div>
+                <div class="form-group">
+                    <label>برچسب فارسی</label>
+                    <input type="text" id="newLabel" placeholder="طلا" required>
+                </div>
+                <div class="form-group">
+                    <label>منبع</label>
+                    <select id="newSource">
+                        <option value="bitpin">بیت‌پین</option>
+                        <option value="frankfurter">فرانکفرتر</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>کد</label>
+                    <input type="text" id="newCode" placeholder="XAU یا BTC_IRT" required>
+                </div>
+                <div class="form-group">
+                    <label>اعشار</label>
+                    <input type="number" id="newDecimals" value="0" min="0" max="10">
+                </div>
+                <div class="form-group">
+                    <label>واحد</label>
+                    <input type="text" id="newUnit" placeholder="تومان، دلار">
+                </div>
+                <div class="form-group">
+                    <label>ترتیب</label>
+                    <input type="number" id="newSortOrder" value="0">
+                </div>
+                <div class="form-group">
+                    <label>نمایش تغییر</label>
+                    <select id="newShowChange">
+                        <option value="true">بله</option>
+                        <option value="false">خیر</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn btn-primary" style="width:100%">افزودن</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📡 مانیتورها</h2>
+            <div class="monitor-grid" id="monitorsList">
+                <div class="empty-state">در حال بارگذاری...</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📝 قالب پیام</h2>
+            <form onsubmit="updateTemplate(event)">
+                <div class="form-group" style="margin-bottom:10px">
+                    <label>قالب ({label}, {price}, {change}, {change_emoji})</label>
+                    <textarea id="templateInput" style="width:100%; min-height:50px; font-family:monospace; padding:8px; border-radius:6px; border:1px solid #0f3460; background:rgba(26,26,46,0.5); color:#e0e0e0;">▫️ {label}: {price} ({change})</textarea>
+                </div>
+                <div class="form-row" style="display:flex; gap:10px; align-items:end">
+                    <div class="form-group" style="flex:1">
+                        <label>فاصله به‌روزرسانی (دقیقه)</label>
+                        <input type="number" id="intervalInput" value="120" min="5" max="1440">
+                    </div>
+                    <button type="submit" class="btn btn-primary">ذخیره</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">👁️ پیش‌نمایش</h2>
+            <div class="preview-box" id="previewBox">در حال بارگذاری...</div>
+        </div>
+    </div>
+
+    <script>
+    const API = {
+        baseUrl: '',
+        init() {
+            const s = localStorage.getItem('apiBaseUrl');
+            if (s) { this.baseUrl = s; document.getElementById('apiUrl').value = s; }
+        },
+        setUrl(u) { this.baseUrl = u.replace(/\/$/, ''); localStorage.setItem('apiBaseUrl', this.baseUrl); },
+        async req(method, path, body) {
+            const r = await fetch(this.baseUrl + path, {
+                method, headers: {'Content-Type':'application/json'},
+                body: body ? JSON.stringify(body) : undefined
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        },
+        get(p){return this.req('GET',p)},
+        post(p,b){return this.req('POST',p,b)},
+        del(p){return this.req('DELETE',p)}
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        API.init();
+        if (API.baseUrl) refreshData();
+    });
+
+    function saveApiUrl() {
+        const u = document.getElementById('apiUrl').value.trim();
+        if (!u) return showToast('آدرس را وارد کنید', true);
+        API.setUrl(u);
+        showToast('ذخیره شد');
+        refreshData();
+    }
+
+    async function refreshData() {
+        if (!API.baseUrl) {
+            document.getElementById('monitorsList').innerHTML = '<div class="empty-state">آدرس API را وارد کنید</div>';
+            return;
+        }
+        try {
+            const monitors = await API.get('/api/monitors');
+            renderMonitors(monitors);
+            await checkTelegraph();
+            await refreshPreview();
+            document.getElementById('statusDot').className = 'status-dot on';
+            document.getElementById('statusText').textContent = 'متصل';
+            document.getElementById('monitorCount').textContent = monitors.filter(m=>m.enabled).length + ' مانیتور';
+        } catch(e) {
+            document.getElementById('statusDot').className = 'status-dot off';
+            document.getElementById('statusText').textContent = 'خطا';
+            showToast('خطا: ' + e.message, true);
+        }
+    }
+
+    async function checkTelegraph() {
+        try {
+            const s = await API.get('/api/telegraph/status');
+            if (s.configured && s.url) {
+                document.getElementById('telegraphCreate').style.display = 'none';
+                document.getElementById('telegraphInfo').style.display = 'block';
+                document.getElementById('telegraphUrl').textContent = s.url;
+                document.getElementById('openLink').href = s.url;
+            } else {
+                document.getElementById('telegraphCreate').style.display = 'block';
+                document.getElementById('telegraphInfo').style.display = 'none';
+            }
+        } catch(e) {}
+    }
+
+    function renderMonitors(monitors) {
+        const list = document.getElementById('monitorsList');
+        if (!monitors || !monitors.length) {
+            list.innerHTML = '<div class="empty-state">مانیتوری نیست</div>';
+            return;
+        }
+        list.innerHTML = monitors.map(m => {
+            const p = m.cached_price;
+            const extra = m.extra || {};
+            const dec = extra.decimals || 0;
+            const unit = extra.unit || '';
+            let ps = '—';
+            if (p && p.price) {
+                ps = Number(p.price).toLocaleString('fa-IR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+                if (unit) ps += ' ' + unit;
+            }
+            return '<div class="monitor-item ' + (m.enabled ? '' : 'disabled') + '">' +
+                '<div class="monitor-info"><span class="monitor-label">' + m.label + '</span>' +
+                '<span class="monitor-meta">' + m.source + ' / ' + m.code + '</span></div>' +
+                '<div class="monitor-price">' + ps + '</div>' +
+                '<div class="monitor-actions">' +
+                '<button class="btn btn-sm ' + (m.enabled ? 'btn-success' : 'btn-secondary') + '" onclick="toggle(' + m.id + ',' + !m.enabled + ')">' + (m.enabled ? 'فعال' : 'غیرفعال') + '</button>' +
+                '<button class="btn btn-sm btn-danger" onclick="del(' + m.id + ')">حذف</button>' +
+                '</div></div>';
+        }).join('');
+    }
+
+    async function toggle(id, en) {
+        await API.post('/api/toggle/' + id, { enabled: en });
+        showToast(en ? 'فعال' : 'غیرفعال');
+        refreshData();
+    }
+
+    async function del(id) {
+        if (!confirm('مطمئنی؟')) return;
+        await API.del('/api/monitors/' + id);
+        showToast('حذف شد');
+        refreshData();
+    }
+
+    async function addMonitor(e) {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('newName').value,
+            label: document.getElementById('newLabel').value,
+            source: document.getElementById('newSource').value,
+            code: document.getElementById('newCode').value.toUpperCase(),
+            sort_order: parseInt(document.getElementById('newSortOrder').value) || 0,
+            extra: {
+                decimals: parseInt(document.getElementById('newDecimals').value) || 0,
+                unit: document.getElementById('newUnit').value,
+                show_change: document.getElementById('newShowChange').value === 'true'
+            }
+        };
+        await API.post('/api/monitors', data);
+        showToast('اضافه شد');
+        e.target.reset();
+        refreshData();
+    }
+
+    async function updateTemplate(e) {
+        e.preventDefault();
+        await API.post('/api/settings', {
+            template: document.getElementById('templateInput').value,
+            update_interval_minutes: document.getElementById('intervalInput').value
+        });
+        showToast('ذخیره شد');
+    }
+
+    async function refreshPreview() {
+        try {
+            const monitors = await API.get('/api/monitors');
+            let t = '📊 قیمت‌های لحظه‌ای\n\n';
+            for (const m of monitors) {
+                if (!m.enabled || !m.cached_price) continue;
+                const ex = m.extra || {};
+                const d = ex.decimals || 0;
+                const u = ex.unit || '';
+                const p = Number(m.cached_price.price).toLocaleString('fa-IR',{minimumFractionDigits:d,maximumFractionDigits:d});
+                t += '▫️ ' + m.label + ': ' + p + ' ' + u + '\n';
+            }
+            t += '\n🔄 هر ۲ ساعت به‌روزرسانی می‌شود';
+            document.getElementById('previewBox').textContent = t;
+        } catch(e) {
+            document.getElementById('previewBox').textContent = 'خطا';
+        }
+    }
+
+    async function forceUpdate() {
+        try {
+            await API.post('/api/prices/refresh', {});
+            await API.post('/api/telegraph/update', {});
+            showToast('به‌روزرسانی شد');
+            refreshData();
+        } catch(e) { showToast('خطا', true); }
+    }
+
+    async function createTelegraphAccount() {
+        const name = document.getElementById('telegraphName').value || 'cryptoprice';
+        try {
+            const r = await API.post('/api/telegraph/create_account', { short_name: name });
+            if (r.success) showToast('اکانت ساخته شد');
+            checkTelegraph();
+        } catch(e) { showToast('خطا: ' + e.message, true); }
+    }
+
+    async function updateTelegraphNow() {
+        try {
+            await API.post('/api/telegraph/update', {});
+            showToast('صفحه آپدیت شد');
+            checkTelegraph();
+        } catch(e) { showToast('خطا', true); }
+    }
+
+    function copyLink() {
+        const u = document.getElementById('telegraphUrl').textContent;
+        navigator.clipboard.writeText(u);
+        showToast('کپی شد');
+    }
+
+    function showToast(msg, err) {
+        const t = document.createElement('div');
+        t.className = 'toast' + (err ? ' error' : '');
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+    </script>
+</body>
+</html>
