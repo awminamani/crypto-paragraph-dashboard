@@ -28,8 +28,12 @@ export interface Settings {
 }
 
 function getBaseUrl(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("apiBaseUrl") || process.env.NEXT_PUBLIC_API_URL || "";
+  // Only access browser APIs inside functions that run client-side
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("apiBaseUrl");
+    if (stored) return stored;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "";
 }
 
 async function req<T>(method: string, path: string, body?: any): Promise<T> {
