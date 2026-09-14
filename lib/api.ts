@@ -27,13 +27,10 @@ export interface Settings {
   template: string;
 }
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  typeof window !== "undefined"
-    ? typeof window !== "undefined"
-      ? localStorage.getItem("apiBaseUrl") || ""
-      : ""
-    : "";
+function getBaseUrl(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("apiBaseUrl") || process.env.NEXT_PUBLIC_API_URL || "";
+}
 
 async function req<T>(method: string, path: string, body?: any): Promise<T> {
   const url = BASE_URL + path;
