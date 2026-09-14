@@ -33,7 +33,7 @@ function getBaseUrl(): string {
 }
 
 async function req<T>(method: string, path: string, body?: any): Promise<T> {
-  const url = BASE_URL + path;
+  const url = getBaseUrl() + path;
   const res = await fetch(url, {
     method,
     headers: { "Content-Type": "application/json" },
